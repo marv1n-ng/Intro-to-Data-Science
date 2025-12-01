@@ -39,11 +39,13 @@ neet <- neet_raw %>%
   clean_names() %>%
   transmute(
     country = entity,
-    code = code,
-    year = year,
-    neet_youth_pct = share_of_youth_not_in_education_employment_or_training_total_of_youth_population
+    code    = code,
+    year    = year,
+    neet_youth_pct =
+      share_of_youth_not_in_education_employment_or_training_total_percent_of_youth_population
   ) %>%
   drop_na(code, year)
+
 
 # ---- Merge datasets ----
 data_country <- continents %>%
@@ -77,4 +79,10 @@ if (!dir.exists(here("output"))) dir.create(here("output"))
 write_csv(data_country, here("output", "cleaned_country_level.csv"))
 write_csv(data_continent, here("output", "cleaned_continent_panel.csv"))
 
-cat("Data cleaned and saved to /output.\n")
+
+# ---- View data ----
+country_data <- read_csv("output/cleaned_country_level.csv")
+continent_data <- read_csv("output/cleaned_continent_panel.csv")
+
+View(country_data)
+View(continent_data)
