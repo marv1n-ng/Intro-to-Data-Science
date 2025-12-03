@@ -1,7 +1,7 @@
-setwd("~/Downloads/Imperial EFDS Y1/data sets")
+setwd("~/Desktop/data sci/data sets")
 
-continents_ID <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/data sets/continents-according-to-our-world-in-data.csv")
-GDP_per_capita <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/data sets/gdp-per-capita-worldbank.csv")
+continents_ID <- read.csv("~/Desktop/data sci/data sets/continents-according-to-our-world-in-data.csv")
+GDP_per_capita <- read.csv("~/Desktop/data sci/data sets/gdp-per-capita-worldbank.csv")
 
 library(dplyr)
 library(ggplot2)
@@ -52,8 +52,54 @@ box_df <- merged_df %>%
   )
 
 # box plot
+# compute whiskers per continent
+whiskers <- box_df %>%
+  group_by(Continent) %>%
+  summarise(
+    Q1  = quantile(gdp_growth, 0.25),
+    Q3  = quantile(gdp_growth, 0.75),
+    IQR = IQR(gdp_growth),
+    upper = max(gdp_growth[gdp_growth <= Q3 + 1.5 * IQR]),
+    lower = min(gdp_growth[gdp_growth >= Q1 - 1.5 * IQR])
+  ) %>%
+  mutate(x_pos = as.numeric(factor(Continent, levels = levels(factor(box_df$Continent)))))
+
+# --- plot ---
 ggplot(box_df, aes(x = Continent, y = gdp_growth, fill = Continent)) +
-  geom_boxplot(alpha = 0.8, outlier.shape = 21, outlier.size = 1.8) +
+  geom_boxplot(
+    alpha = 0.8,
+    outlier.shape = 21,
+    outlier.size = 1.8,
+    lwd = 0.7
+  ) +
+  
+  # top whisker line
+  # top whisker line (50% width)
+  geom_segment(
+    data = whiskers,
+    aes(
+      x = x_pos - 0.2,
+      xend = x_pos + 0.2,
+      y = upper,
+      yend = upper
+    ),
+    inherit.aes = FALSE,
+    linewidth = 0.7
+  ) +
+  
+  # bottom whisker line (50% width)
+  geom_segment(
+    data = whiskers,
+    aes(
+      x = x_pos - 0.2,
+      xend = x_pos + 0.2,
+      y = lower,
+      yend = lower
+    ),
+    inherit.aes = FALSE,
+    linewidth = 0.7
+  ) +
+  
   scale_fill_manual(values = c(
     "Africa" = "seagreen",
     "Asia" = "red",
