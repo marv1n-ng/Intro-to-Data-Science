@@ -1,0 +1,76 @@
+setwd("~/Downloads/Imperial EFDS Y1/data sets")
+
+continents_ID <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/data sets/continents-according-to-our-world-in-data.csv")
+GDP_per_capita <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/data sets/gdp-per-capita-worldbank.csv")
+
+library(dplyr)
+library(ggplot2)
+
+# merge the two datasets
+merged_df <- full_join(
+  GDP_per_capita,
+  continents_ID,
+  by = c("Code")
+)
+View(merged_df)
+
+# calculate GDP per capita growth in each country
+merged_df <- merged_df %>%
+  rename(GDP_per_capita_PPP = GDP.per.capita..PPP..constant.2017.international...) %>%
+  arrange(Code, Year.x) %>%
+  group_by(Code) %>%
+  mutate(
+    gdp_growth = (GDP_per_capita_PPP - lag(GDP_per_capita_PPP)) / lag(GDP_per_capita_PPP) * 100
+  ) %>%
+  ungroup()
+
+# compute mean growth per continent and global mean (line graph)
+cont_growth <- merged_df %>%
+  filter(!is.na(gdp_growth), !is.na(Continent)) %>%
+  group_by(Year.x, Continent) %>%
+  summarise(
+    mean_growth = mean(gdp_growth, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(series = Continent)  # label for plotting
+View(cont_growth)
+
+# compute mean growth per continent and global mean (heat tile graph)
+cont_growth <- merged_df %>%
+  filter(!is.na(gdp_growth), !is.na(Continent)) %>%
+  group_by(Year.x, Continent) %>%
+  summarise(
+    mean_growth = mean(gdp_growth, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# heat tile
+ggplot(cont_growth,
+       aes(x = Year.x, y = Continent, fill = mean_growth)) +
+  geom_tile(color = "white") +
+  scale_fill_gradientn(
+    colours = c(
+      "red",   # RED for -15
+      "#f0f0f0",   # GREY for 0
+      "seagreen"    # GREEN for 10
+    ),
+    values = scales::rescale(c(-15, 0, 10)),   
+    limits = c(-15, 10),                       
+    name = "Mean GDP\nper capita\ngrowth (%)"
+  ) +
+  labs(
+    title = "Average GDP per Capita Growth by Continent and Year",
+    subtitle = "Heatmap with custom scale: -10=red, 0=grey, 10=green",
+    x = "Year",
+    y = "Continent"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    panel.grid = element_blank()
+  )
+
+
+
+
+
