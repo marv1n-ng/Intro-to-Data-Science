@@ -1,7 +1,7 @@
-setwd("~/Desktop/data sci/data sets")
+setwd("~/Downloads/Imperial EFDS Y1/data sets")
 
-continents_ID <- read.csv("~/Desktop/data sci/data sets/continents-according-to-our-world-in-data.csv")
-GDP_per_capita <- read.csv("~/Desktop/data sci/data sets/gdp-per-capita-worldbank.csv")
+continents_ID <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/data sets/continents-according-to-our-world-in-data.csv")
+GDP_per_capita <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/data sets/gdp-per-capita-worldbank.csv")
 
 library(dplyr)
 library(ggplot2)
@@ -67,7 +67,7 @@ whiskers <- box_df %>%
 # --- plot ---
 ggplot(box_df, aes(x = Continent, y = gdp_growth, fill = Continent)) +
   geom_boxplot(
-    alpha = 0.8,
+    alpha = 0.6,
     outlier.shape = 21,
     outlier.size = 1.8,
     lwd = 0.7
@@ -84,7 +84,7 @@ ggplot(box_df, aes(x = Continent, y = gdp_growth, fill = Continent)) +
       yend = upper
     ),
     inherit.aes = FALSE,
-    linewidth = 0.7
+    linewidth = 0.3
   ) +
   
   # bottom whisker line (50% width)
@@ -97,7 +97,7 @@ ggplot(box_df, aes(x = Continent, y = gdp_growth, fill = Continent)) +
       yend = lower
     ),
     inherit.aes = FALSE,
-    linewidth = 0.7
+    linewidth = 0.3
   ) +
   
   scale_fill_manual(values = c(
