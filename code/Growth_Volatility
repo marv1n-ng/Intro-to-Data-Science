@@ -1,0 +1,109 @@
+library(dplyr)
+library(ggplot2)
+
+# Load data
+continents_ID   <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/data sets/continents-according-to-our-world-in-data.csv")
+GDP_per_capita  <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/data sets/gdp-per-capita-worldbank.csv")
+
+# LDC codes
+LDC_codes <- c(
+  "AFG","AGO","BGD","BEN","BFA","BDI","KHM","CAF","TCD","COM","COD","DJI",
+  "ERI","ETH","GMB","GIN","GNB","HTI","KIR","LAO","LSO","LBR","MDG","MWI",
+  "MLI","MRT","MOZ","MMR","NPL","NER","RWA","SEN","SLE","SLB","SOM","SSD",
+  "SDN","TLS","TGO","TUV","TZA","UGA","YEM","ZMB"
+)
+
+# Clean GDP data
+gdp_clean <- GDP_per_capita %>%
+  rename(
+    GDP_pc = GDP.per.capita..PPP..constant.2017.international...
+  )
+
+# Clean continents data (just Code + Continent)
+cont_clean <- continents_ID %>%
+  select(Code, Continent)
+
+# Merge GDP + continents by Code
+merged_df <- gdp_clean %>%
+  left_join(cont_clean, by = "Code")
+
+# Compute annual GDP per capita growth per country
+merged_df <- merged_df %>%
+  arrange(Code, Year) %>%
+  group_by(Code) %>%
+  mutate(
+    gdp_growth = (GDP_pc - lag(GDP_pc)) / lag(GDP_pc) * 100
+  ) %>%
+  ungroup()
+
+# Restrict to 2000–2019, clean out crazy values, mark LDC vs Non-LDC
+analysis_df <- merged_df %>%
+  filter(
+    Year >= 2000, Year <= 2019,
+    !is.na(gdp_growth),
+    gdp_growth > -50,
+    gdp_growth < 100
+  ) %>%
+  mutate(
+    group = ifelse(Code %in% LDC_codes, "LDC", "Non-LDC")
+  )
+
+# Compute volatility of growth per country (std dev over time)
+growth_vol <- analysis_df %>%
+  group_by(Code, group) %>%
+  summarise(
+    country    = dplyr::first(Entity),          # country name
+    vol_growth = sd(gdp_growth, na.rm = TRUE),  # volatility (std dev)
+    n_years    = n(),
+    .groups    = "drop"
+  ) %>%
+  filter(n_years >= 5)   # keep countries with at least 5 years of data
+
+# quick summary table to check differences
+growth_vol %>%
+  group_by(group) %>%
+  summarise(
+    median_vol = median(vol_growth, na.rm = TRUE),
+    mean_vol   = mean(vol_growth, na.rm = TRUE),
+    n_countries = n()
+  )
+
+
+# Trim volatility values above 20%
+growth_vol_trimmed <- growth_vol %>%
+  filter(vol_growth <= 20)
+
+# histogram
+
+ggplot() +
+  # Non-LDC histogram first (drawn underneath)
+  geom_histogram(
+    data = growth_vol_trimmed %>% filter(group == "Non-LDC"),
+    aes(x = vol_growth, fill = group),
+    alpha = 0.6,
+    bins = 25,
+    colour = "white"
+  ) +
+  # LDC histogram second (drawn on top)
+  geom_histogram(
+    data = growth_vol_trimmed %>% filter(group == "LDC"),
+    aes(x = vol_growth, fill = group),
+    alpha = 0.6,     # slightly more opacity to make it stand out
+    bins = 25,
+    colour = "white"
+  ) +
+  scale_fill_manual(
+    values = c("LDC" = "orange", "Non-LDC" = "seagreen4")
+  ) +
+  labs(
+    title = "Distribution of GDP per Capita Growth Volatility",
+    subtitle = "Volatility trimmed at 20% to remove unrealistic outliers",
+    x = "Volatility (standard deviation of GDP per capita growth)",
+    y = "Number of Countries",
+    fill = "Country Group"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold")
+  )
+
