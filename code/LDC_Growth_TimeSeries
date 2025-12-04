@@ -1,0 +1,143 @@
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(ggrepel)
+
+# Load data
+continents_ID   <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/data sets/continents-according-to-our-world-in-data.csv")
+GDP_per_capita  <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/data sets/gdp-per-capita-worldbank.csv")
+
+# LDC codes
+LDC_codes <- c(
+  "AFG","AGO","BGD","BEN","BFA","BDI","KHM","CAF","TCD","COM","COD","DJI",
+  "ERI","ETH","GMB","GIN","GNB","HTI","KIR","LAO","LSO","LBR","MDG","MWI",
+  "MLI","MRT","MOZ","MMR","NPL","NER","RWA","SEN","SLE","SLB","SOM","SSD",
+  "SDN","TLS","TGO","TUV","TZA","UGA","YEM","ZMB")
+
+# Merge datasets 
+merged_df <- full_join(
+  GDP_per_capita,
+  continents_ID,
+  by = c("Code")
+) %>%
+  rename(
+    GDP_per_capita_PPP = GDP.per.capita..PPP..constant.2017.international...
+  )
+
+# Compute GDP per capita growth
+merged_df <- merged_df %>%
+  arrange(Code, Year.x) %>%
+  group_by(Code) %>%
+  mutate(
+    gdp_growth = (GDP_per_capita_PPP - lag(GDP_per_capita_PPP)) /
+      lag(GDP_per_capita_PPP) * 100
+  ) %>%
+  ungroup()
+
+# Filter to LDCs & trim extreme values
+ldc_df <- merged_df %>%
+  filter(
+    Code %in% LDC_codes,
+    !is.na(gdp_growth),
+    gdp_growth > -50,
+    gdp_growth < 100
+  )
+
+# LDC mean growth by year
+ldc_year_growth <- ldc_df %>%
+  group_by(Year.x) %>%
+  summarise(
+    mean_growth = mean(gdp_growth, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Latest year + top 2 / bottom 2 in that year
+latest_ldc_year <- ldc_df %>%
+  summarise(max_year = max(Year.x)) %>%
+  pull(max_year)
+
+ldc_latest <- ldc_df %>%
+  filter(Year.x == latest_ldc_year)
+
+top2 <- ldc_latest %>%
+  arrange(desc(gdp_growth)) %>%
+  slice_head(n = 2)
+
+bottom2 <- ldc_latest %>%
+  arrange(gdp_growth) %>%
+  slice_head(n = 2)
+
+highlight_countries <- bind_rows(top2, bottom2) %>%
+  distinct(Code, Entity = Entity.x)
+
+# Build plotting data: LDC mean + 4 highlighted countries
+ldc_mean_series <- ldc_year_growth %>%
+  mutate(
+    series = "LDC mean",
+    value  = mean_growth
+  ) %>%
+  select(Year.x, series, value)
+
+country_series <- ldc_df %>%
+  filter(Code %in% highlight_countries$Code) %>%
+  left_join(highlight_countries, by = "Code") %>%
+  mutate(
+    series = Entity,
+    value  = gdp_growth
+  ) %>%
+  select(Year.x, series, value)
+
+plot_df <- bind_rows(ldc_mean_series, country_series)
+
+# Label data: 4 countries at latest year
+label_df <- plot_df %>%
+  filter(series != "LDC mean",
+         Year.x == latest_ldc_year)
+
+# Define line sizes: LDC mean thick, others thinner
+all_series <- unique(plot_df$series)
+
+line_sizes <- setNames(rep(0.4, length(all_series)), all_series)  # default thin
+line_sizes["LDC mean"] <- 2                                       # mean thicker
+
+# Define custom line colours (EDIT these however you like)
+line_colours <- c(
+  "LDC mean" = "seagreen",              # thick black line for the mean
+  setNames(
+    c("red", "dodgerblue", "orange", "brown"),    # your 4 highlighted countries
+    all_series[all_series != "LDC mean"]
+  )
+)
+
+# Plot
+ggplot(plot_df,
+       aes(x = Year.x, y = value, colour = series, size = series)) +
+  geom_line(alpha = 0.95) +
+  scale_size_manual(values = line_sizes, guide = "none") +
+  scale_colour_manual(values = line_colours) +     # <--- ADDED HERE
+  geom_text_repel(
+    data = label_df,
+    aes(label = series),
+    nudge_x = 0.5,
+    direction = "y",
+    hjust = 0,
+    size = 3,
+    segment.size = 0.3,
+    show.legend = FALSE
+  ) +
+  scale_x_continuous(expand = expansion(mult = c(0.01, 0.08))) +
+  geom_hline(yintercept = 7, linetype = "dashed", colour = "grey30") +
+  labs(
+    title = "LDC GDP per Capita Growth Over Time",
+    subtitle = paste0(
+      "Thin lines: Top and Bottom 2 in latest year ",
+      latest_ldc_year, " | Dotted line: SDG target (7%)"
+    ),
+    x = "Year",
+    y = "GDP per Capita Growth (%)",
+    colour = "Series"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold")
+  )
