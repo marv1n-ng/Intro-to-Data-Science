@@ -1,0 +1,137 @@
+install.packages("patchwork")
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(ggrepel)
+library(patchwork)   # <--- NEW
+
+# Load data
+continents_ID   <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/data sets/continents-according-to-our-world-in-data.csv")
+GDP_per_capita  <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/data sets/gdp-per-capita-worldbank.csv")
+additional_df   <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/additional_df.csv")
+
+# LDC codes
+LDC_codes <- c(
+  "AFG","AGO","BGD","BEN","BFA","BDI","KHM","CAF","TCD","COM","COD","DJI",
+  "ERI","ETH","GMB","GIN","GNB","HTI","KIR","LAO","LSO","LBR","MDG","MWI",
+  "MLI","MRT","MOZ","MMR","NPL","NER","RWA","SEN","SLE","SLB","SOM","SSD",
+  "SDN","TLS","TGO","TUV","TZA","UGA","YEM","ZMB"
+)
+
+# Clean investment data
+inv_clean <- additional_df %>%
+  rename(Year = year) %>%
+  select(Code, country, Year, Investment_Share)
+
+# Clean GDP data
+gdp_clean <- GDP_per_capita %>%
+  rename(GDP_pc = GDP.per.capita..PPP..constant.2017.international...)
+
+# Clean continents data
+cont_clean <- continents_ID %>%
+  select(Code, Continent)
+
+# Merge all 3 datasets by Code + Year
+full_panel <- full_join(gdp_clean, inv_clean, by = c("Code", "Year")) %>%
+  left_join(cont_clean, by = "Code")
+
+# Compute GDP per capita growth
+full_panel <- full_panel %>%
+  arrange(Code, Year) %>%
+  group_by(Code) %>%
+  mutate(
+    gdp_growth = (GDP_pc - lag(GDP_pc)) / lag(GDP_pc) * 100
+  ) %>%
+  ungroup()
+
+# Clean dataset: remove NA / extreme values
+full_panel <- full_panel %>%
+  filter(
+    gdp_growth > -50, gdp_growth < 100, !is.na(gdp_growth)
+  ) %>%
+  mutate(
+    group = ifelse(Code %in% LDC_codes, "LDC", "Non-LDC")
+  )
+
+# Most recent year with both variables
+latest_year_both <- full_panel %>%
+  filter(!is.na(Investment_Share), !is.na(gdp_growth)) %>%
+  summarise(max_year = max(Year)) %>%
+  pull(max_year)
+
+# Data for scatter plot
+scatter_df <- full_panel %>%
+  filter(Year == latest_year_both,
+         !is.na(Investment_Share),
+         !is.na(gdp_growth))
+
+# r-values for labels
+cor_labels <- scatter_df %>%
+  group_by(group) %>%
+  summarise(
+    r = cor(Investment_Share, gdp_growth, use = "complete.obs")
+  ) %>%
+  mutate(
+    label = paste0(group, ": r = ", round(r, 3))
+  )
+
+# shared colour palette
+col_vals <- c("LDC" = "orange", "Non-LDC" = "seagreen4")
+
+# PLOT 1: scatter with regression + r labels 
+p_scatter <- ggplot(scatter_df, aes(x = Investment_Share, y = gdp_growth, colour = group)) +
+  geom_point(size = 2.5, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 1.2) +
+  geom_text(
+    data = cor_labels,
+    aes(x = Inf, y = Inf, label = label),
+    hjust = 1, vjust = c(2, 4),
+    colour = c("orange", "seagreen4"),
+    size = 5,
+    fontface = "bold",
+    inherit.aes = FALSE
+  ) +
+  scale_colour_manual(values = col_vals) +
+  coord_cartesian(ylim = c(-15, 25)) +      # <- y-axis range for scatter
+  labs(
+    title = paste0("Investment Share vs GDP per Capita Growth (", latest_year_both, ")"),
+    subtitle = "Correlation (r) shown for LDC and Non-LDC groups",
+    x = "Investment Share (% of GDP)",
+    y = "GDP per Capita Growth (%)",
+    colour = "Country Group"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold")
+  )
+
+# PLOT 2: mean investment share over time 
+inv_time_series <- full_panel %>%
+  filter(!is.na(Investment_Share)) %>%
+  group_by(Year, group) %>%
+  summarise(
+    mean_inv = mean(Investment_Share, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+p_ts <- ggplot(inv_time_series, aes(x = Year, y = mean_inv, colour = group)) +
+  geom_line(size = 1.4, alpha = 0.9) +
+  scale_colour_manual(values = col_vals) +
+  labs(
+    title = "Mean Investment Share Over Time",
+    subtitle = "Investment share = Gross Capital Formation (% of GDP)",
+    x = "Year",
+    y = "Mean Investment Share (% of GDP)",
+    colour = "Country Group"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold")
+  )
+
+# Combined Panel (single shared legend)
+combined_plot <- p_scatter / p_ts +
+  plot_layout(heights = c(2, 2), guides = "collect") &
+  theme(legend.position = "right")
+
+combined_plot
