@@ -109,12 +109,12 @@ line_colours <- c(
   )
 )
 
-# Plot
+# plot line graph
 ggplot(plot_df,
        aes(x = Year.x, y = value, colour = series, size = series)) +
   geom_line(alpha = 0.95) +
   scale_size_manual(values = line_sizes, guide = "none") +
-  scale_colour_manual(values = line_colours) +     # <--- ADDED HERE
+  scale_colour_manual(values = line_colours) +
   geom_text_repel(
     data = label_df,
     aes(label = series),
@@ -137,7 +137,34 @@ ggplot(plot_df,
     y = "GDP per Capita Growth (%)",
     colour = "Series"
   ) +
-  theme_minimal(base_size = 13) +
   theme(
-    plot.title = element_text(face = "bold")
+    # Title + subtitle
+    plot.title = element_text(face = "bold", hjust = 0.3, size = 14),
+    plot.subtitle = element_text(hjust = 0.4, size = 11,
+                                 colour = "gray30", margin = margin(b = 15)),
+    
+    # Backgrounds
+    plot.background  = element_rect(fill = "#f5f5f5", colour = NA),  # outer grey
+    panel.background = element_rect(fill = "white"),                 # inner white
+    panel.border     = element_rect(colour = "gray70", linewidth = 0.8),
+    
+    # Grid lines
+    panel.grid.major = element_line(colour = "gray90", linewidth = 0.5),
+    panel.grid.minor = element_line(colour = "gray95", linewidth = 0.3),
+    
+    # Legend
+    legend.position   = "bottom",
+    legend.title      = element_blank(),
+    legend.text       = element_text(size = 10),
+    legend.background = element_rect(fill = "#f5f5f5", colour = NA),
+    legend.key        = element_rect(fill = "white", colour = NA),
+    
+    # Axes
+    axis.title = element_text(face = "bold", size = 11),
+    axis.text  = element_text(size = 10, colour = "gray20"),
+    axis.ticks = element_line(colour = "gray50"),
+    axis.line  = element_line(colour = "gray40"),
+    
+    # Margins
+    plot.margin = margin(15, 15, 15, 15)
   )
