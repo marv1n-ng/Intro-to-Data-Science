@@ -3,18 +3,19 @@ library(ggplot2)
 library(scales)
 library(ggrepel)
 
-# Load data
+#------------------------ Load data ------------------------#
 continents_ID   <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/data sets/continents-according-to-our-world-in-data.csv")
 GDP_per_capita  <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/data sets/gdp-per-capita-worldbank.csv")
 
-# LDC codes
+#------------------------ LDC codes ------------------------#
 LDC_codes <- c(
   "AFG","AGO","BGD","BEN","BFA","BDI","KHM","CAF","TCD","COM","COD","DJI",
   "ERI","ETH","GMB","GIN","GNB","HTI","KIR","LAO","LSO","LBR","MDG","MWI",
   "MLI","MRT","MOZ","MMR","NPL","NER","RWA","SEN","SLE","SLB","SOM","SSD",
-  "SDN","TLS","TGO","TUV","TZA","UGA","YEM","ZMB")
+  "SDN","TLS","TGO","TUV","TZA","UGA","YEM","ZMB"
+)
 
-# Merge datasets 
+#--------------------- Merge & clean GDP -------------------#
 merged_df <- full_join(
   GDP_per_capita,
   continents_ID,
@@ -24,7 +25,7 @@ merged_df <- full_join(
     GDP_per_capita_PPP = GDP.per.capita..PPP..constant.2017.international...
   )
 
-# Compute GDP per capita growth
+#----------------- Compute GDP per capita growth -----------#
 merged_df <- merged_df %>%
   arrange(Code, Year.x) %>%
   group_by(Code) %>%
@@ -34,7 +35,7 @@ merged_df <- merged_df %>%
   ) %>%
   ungroup()
 
-# Filter to LDCs & trim extreme values
+#-------------- Filter to LDCs & trim extremes -------------#
 ldc_df <- merged_df %>%
   filter(
     Code %in% LDC_codes,
@@ -43,7 +44,7 @@ ldc_df <- merged_df %>%
     gdp_growth < 100
   )
 
-# LDC mean growth by year
+#----------- LDC mean GDP per capita growth by year --------#
 ldc_year_growth <- ldc_df %>%
   group_by(Year.x) %>%
   summarise(
@@ -51,7 +52,7 @@ ldc_year_growth <- ldc_df %>%
     .groups = "drop"
   )
 
-# Latest year + top 2 / bottom 2 in that year
+#------- Latest year & top 3 / bottom 3 LDCs in that year --#
 latest_ldc_year <- ldc_df %>%
   summarise(max_year = max(Year.x)) %>%
   pull(max_year)
@@ -59,18 +60,18 @@ latest_ldc_year <- ldc_df %>%
 ldc_latest <- ldc_df %>%
   filter(Year.x == latest_ldc_year)
 
-top2 <- ldc_latest %>%
+top3 <- ldc_latest %>%
   arrange(desc(gdp_growth)) %>%
-  slice_head(n = 2)
+  slice_head(n = 3)
 
-bottom2 <- ldc_latest %>%
+bottom3 <- ldc_latest %>%
   arrange(gdp_growth) %>%
-  slice_head(n = 2)
+  slice_head(n = 3)
 
-highlight_countries <- bind_rows(top2, bottom2) %>%
+highlight_countries <- bind_rows(top3, bottom3) %>%
   distinct(Code, Entity = Entity.x)
 
-# Build plotting data: LDC mean + 4 highlighted countries
+#------------- Build plotting data: mean + 6 LDCs ----------#
 ldc_mean_series <- ldc_year_growth %>%
   mutate(
     series = "LDC mean",
@@ -89,27 +90,29 @@ country_series <- ldc_df %>%
 
 plot_df <- bind_rows(ldc_mean_series, country_series)
 
-# Label data: 4 countries at latest year
+#---------------- Label data: 6 countries at latest year ---#
 label_df <- plot_df %>%
   filter(series != "LDC mean",
          Year.x == latest_ldc_year)
 
-# Define line sizes: LDC mean thick, others thinner
+#---------------- Line sizes: mean thick, others thin -------#
 all_series <- unique(plot_df$series)
 
 line_sizes <- setNames(rep(0.4, length(all_series)), all_series)  # default thin
 line_sizes["LDC mean"] <- 2                                       # mean thicker
 
-# Define custom line colours (EDIT these however you like)
-line_colours <- c(
-  "LDC mean" = "seagreen",              # thick black line for the mean
-  setNames(
-    c("red", "dodgerblue", "orange", "brown"),    # your 4 highlighted countries
-    all_series[all_series != "LDC mean"]
-  )
+#---------------- Custom colours: 1 mean + 6 countries -------#
+other_series <- all_series[all_series != "LDC mean"]
+
+# give at least 6 colours for the 6 highlighted countries
+other_cols <- c("red", "dodgerblue", "orange", "brown", "purple", "gold")[seq_along(other_series)]
+
+line_colours <- setNames(
+  c("seagreen", other_cols),
+  c("LDC mean", other_series)
 )
 
-# plot line graph
+#-------------------------- Plot ----------------------------#
 ggplot(plot_df,
        aes(x = Year.x, y = value, colour = series, size = series)) +
   geom_line(alpha = 0.95) +
@@ -130,8 +133,8 @@ ggplot(plot_df,
   labs(
     title = "LDC GDP per Capita Growth Over Time",
     subtitle = paste0(
-      "Thin lines: Top and Bottom 2 in latest year ",
-      latest_ldc_year, " | Dotted line: SDG target (7%)"
+      "Thick line: LDC mean | Thin lines: Top and Bottom 3 LDCs in ",
+      latest_ldc_year, " | Dotted line: SDG target (7% per year)"
     ),
     x = "Year",
     y = "GDP per Capita Growth (%)",
@@ -168,3 +171,4 @@ ggplot(plot_df,
     # Margins
     plot.margin = margin(15, 15, 15, 15)
   )
+
