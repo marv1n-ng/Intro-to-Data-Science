@@ -98,7 +98,7 @@ ggplot() +
   ) +
   
   labs(
-    title = "Distribution of GDP per Capita Growth Volatility",
+    title = "Distribution of GDP per Capita Growth Volatility (2000-2019)",
     subtitle = "Volatility trimmed at 20% to remove unrealistic outliers",
     x = "Volatility (standard deviation of GDP per capita growth)",
     y = "Number of Countries",
