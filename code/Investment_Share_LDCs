@@ -3,7 +3,7 @@ library(dplyr)
 library(ggplot2)
 library(scales)
 library(ggrepel)
-library(patchwork)   # <--- NEW
+library(patchwork)
 
 # Load data
 continents_ID   <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/data sets/continents-according-to-our-world-in-data.csv")
@@ -78,7 +78,7 @@ cor_labels <- scatter_df %>%
 # shared colour palette
 col_vals <- c("LDC" = "orange", "Non-LDC" = "seagreen4")
 
-# PLOT 1: scatter with regression + r labels 
+# ---------------- PLOT 1: scatter with regression + r labels ----------------
 p_scatter <- ggplot(scatter_df, aes(x = Investment_Share, y = gdp_growth, colour = group)) +
   geom_point(size = 2.5, alpha = 0.7) +
   geom_smooth(method = "lm", se = FALSE, linewidth = 1.2) +
@@ -92,7 +92,7 @@ p_scatter <- ggplot(scatter_df, aes(x = Investment_Share, y = gdp_growth, colour
     inherit.aes = FALSE
   ) +
   scale_colour_manual(values = col_vals) +
-  coord_cartesian(ylim = c(-15, 25)) +      # <- y-axis range for scatter
+  coord_cartesian(ylim = c(-15, 25)) +
   labs(
     title = paste0("Investment Share vs GDP per Capita Growth (", latest_year_both, ")"),
     subtitle = "Correlation (r) shown for LDC and Non-LDC groups",
@@ -102,7 +102,30 @@ p_scatter <- ggplot(scatter_df, aes(x = Investment_Share, y = gdp_growth, colour
   ) +
   theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold")
+    # Titles
+    plot.title = element_text(face = "bold", hjust = 0.3, size = 14),
+    plot.subtitle = element_text(hjust = 0.35, size = 11,
+                                 colour = "gray30", margin = margin(b = 15)),
+    # Backgrounds
+    plot.background  = element_rect(fill = "#f5f5f5", colour = NA),
+    panel.background = element_rect(fill = "white", colour = NA),
+    panel.border     = element_rect(colour = "gray70", linewidth = 0.8, fill = NA),
+    # Grid
+    panel.grid.major = element_line(colour = "gray90", linewidth = 0.5),
+    panel.grid.minor = element_line(colour = "gray95", linewidth = 0.3),
+    # Legend
+    legend.position   = "bottom",
+    legend.title      = element_blank(),
+    legend.text       = element_text(size = 10),
+    legend.background = element_rect(fill = "#f5f5f5", colour = NA),
+    legend.key        = element_rect(fill = "white", colour = NA),
+    # Axes
+    axis.title = element_text(face = "bold", size = 12),
+    axis.text  = element_text(size = 10, colour = "gray20"),
+    axis.ticks = element_line(colour = "gray50"),
+    axis.line  = element_line(colour = "gray40"),
+    # Margins
+    plot.margin = margin(15, 15, 15, 15)
   )
 
 # PLOT 2: mean investment share over time 
@@ -126,7 +149,30 @@ p_ts <- ggplot(inv_time_series, aes(x = Year, y = mean_inv, colour = group)) +
   ) +
   theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold")
+    # Titles
+    plot.title = element_text(face = "bold", hjust = 0.3, size = 14),
+    plot.subtitle = element_text(hjust = 0.35, size = 11,
+                                 colour = "gray30", margin = margin(b = 15)),
+    # Backgrounds
+    plot.background  = element_rect(fill = "#f5f5f5", colour = NA),
+    panel.background = element_rect(fill = "white", colour = NA),
+    panel.border     = element_rect(colour = "gray70", linewidth = 0.8, fill = NA),
+    # Grid
+    panel.grid.major = element_line(colour = "gray90", linewidth = 0.5),
+    panel.grid.minor = element_line(colour = "gray95", linewidth = 0.3),
+    # Legend
+    legend.position   = "bottom",
+    legend.title      = element_blank(),
+    legend.text       = element_text(size = 10),
+    legend.background = element_rect(fill = "#f5f5f5", colour = NA),
+    legend.key        = element_rect(fill = "white", colour = NA),
+    # Axes
+    axis.title = element_text(face = "bold", size = 12),
+    axis.text  = element_text(size = 10, colour = "gray20"),
+    axis.ticks = element_line(colour = "gray50"),
+    axis.line  = element_line(colour = "gray40"),
+    # Margins
+    plot.margin = margin(15, 15, 15, 15)
   )
 
 # Combined Panel (single shared legend)
