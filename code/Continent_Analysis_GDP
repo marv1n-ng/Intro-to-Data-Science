@@ -1,5 +1,3 @@
-setwd("~/Downloads/Imperial EFDS Y1/data sets")
-
 continents_ID <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/data sets/continents-according-to-our-world-in-data.csv")
 GDP_per_capita <- read.csv("~/Downloads/Imperial EFDS Y1/Mid Terms Project/data sets/gdp-per-capita-worldbank.csv")
 
@@ -64,59 +62,60 @@ whiskers <- box_df %>%
   ) %>%
   mutate(x_pos = as.numeric(factor(Continent, levels = levels(factor(box_df$Continent)))))
 
-# --- plot ---
-ggplot(box_df, aes(x = Continent, y = gdp_growth, fill = Continent)) +
+# plot 
+ggplot(box_df, aes(x = Continent, y = gdp_growth, fill = Continent, colour = Continent)) +
   geom_boxplot(
+    size = 1.3,
     alpha = 0.6,
-    outlier.shape = 21,
-    outlier.size = 1.8,
-    lwd = 0.7
+    outlier.shape = 4,
+    outlier.size = 5,
+    outlier.stroke = 2.2
   ) +
-  
-  # top whisker line
-  # top whisker line (50% width)
-  geom_segment(
-    data = whiskers,
-    aes(
-      x = x_pos - 0.2,
-      xend = x_pos + 0.2,
-      y = upper,
-      yend = upper
-    ),
-    inherit.aes = FALSE,
-    linewidth = 0.3
+  # error bars on whiskers (like stat_boxplot in p1)
+  stat_boxplot(
+    geom = "errorbar",
+    width = 0.3,
+    linewidth = 1.3,
+    alpha = 0.8
   ) +
-  
-  # bottom whisker line (50% width)
-  geom_segment(
-    data = whiskers,
-    aes(
-      x = x_pos - 0.2,
-      xend = x_pos + 0.2,
-      y = lower,
-      yend = lower
-    ),
-    inherit.aes = FALSE,
-    linewidth = 0.3
-  ) +
-  
-  scale_fill_manual(values = c(
-    "Africa" = "seagreen",
-    "Asia" = "red",
-    "Europe" = "dodgerblue",
+  scale_colour_manual(values = c(
+    "Africa" = "seaGreen",
+    "Asia" = "Red",
+    "Europe" = "dodgerBlue",
     "North America" = "#9C27B0",
-    "Oceania" = "orange",
-    "South America" = "brown"
+    "Oceania" = "Orange",
+    "South America" = "Brown"
+  )) +
+  scale_fill_manual(values = c(
+    "Africa" = "seaGreen",
+    "Asia" = "Red",
+    "Europe" = "dodgerBlue",
+    "North America" = "#9C27B0",
+    "Oceania" = "Orange",
+    "South America" = "Brown"
   )) +
   geom_hline(yintercept = 7, linetype = "dashed", colour = "grey30") +
   labs(
-    title = paste0("GDP per Capita Growth by Continent (", selected_year, ")"),
+    title = paste0("Box Plots of GDP per Capita Growth by Continent (", selected_year, ")"),
     subtitle = "Dashed line = SDG Target (7% per year)",
-    x = "Continent",
+    x = NULL,
     y = "GDP per Capita Growth (%)"
   ) +
-  theme_minimal(base_size = 13) +
   theme(
-    plot.title = element_text(face = "bold"),
-    legend.position = "none"
-  )
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 22),
+    plot.subtitle = element_text(hjust = 0.5, size = 16, colour = "gray15", margin = margin(b = 15)),
+    plot.background = element_rect(fill = "#f5f5f5", colour = NA),
+    legend.position = "none",
+    panel.grid.major = element_line(colour = "gray85", linewidth = 0.4),
+    panel.grid.minor = element_line(colour = "gray90", linewidth = 0.3),
+    panel.background = element_rect(fill = "white"),
+    panel.border = element_rect(colour = "gray70", linewidth = 0.8),
+    axis.title = element_text(face = "bold", size = 17.5, colour = "gray20"),
+    axis.text = element_text(size = 15, colour = "gray20"),
+    axis.text.x = element_text(face = "bold"),
+    axis.ticks = element_line(colour = "gray50"),
+    axis.line = element_line(colour = "gray40"),
+    plot.margin = margin(15, 15, 15, 15)
+  ) +
+  scale_y_continuous(breaks = seq(-10, 8, by = 2)) +
+  coord_cartesian(ylim = c(-10, 8), clip = "off")
