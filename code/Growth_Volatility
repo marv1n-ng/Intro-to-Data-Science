@@ -73,10 +73,9 @@ growth_vol %>%
 growth_vol_trimmed <- growth_vol %>%
   filter(vol_growth <= 20)
 
-# histogram
-
+# plot volatility graph
 ggplot() +
-  # Non-LDC histogram first (drawn underneath)
+  # Non-LDC histogram first (underneath)
   geom_histogram(
     data = growth_vol_trimmed %>% filter(group == "Non-LDC"),
     aes(x = vol_growth, fill = group),
@@ -84,17 +83,20 @@ ggplot() +
     bins = 25,
     colour = "white"
   ) +
-  # LDC histogram second (drawn on top)
+  
+  # LDC histogram on top (foreground)
   geom_histogram(
     data = growth_vol_trimmed %>% filter(group == "LDC"),
     aes(x = vol_growth, fill = group),
-    alpha = 0.6,     # slightly more opacity to make it stand out
+    alpha = 0.6,
     bins = 25,
     colour = "white"
   ) +
+  
   scale_fill_manual(
     values = c("LDC" = "orange", "Non-LDC" = "seagreen4")
   ) +
+  
   labs(
     title = "Distribution of GDP per Capita Growth Volatility",
     subtitle = "Volatility trimmed at 20% to remove unrealistic outliers",
@@ -102,8 +104,38 @@ ggplot() +
     y = "Number of Countries",
     fill = "Country Group"
   ) +
-  theme_minimal(base_size = 14) +
+  
+  # ---------------------- AESTHETICS ADDED ----------------------
+theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold")
-  )
-
+    # Title + subtitle
+    plot.title = element_text(face = "bold", hjust = 0.3, size = 16),
+    plot.subtitle = element_text(hjust = 0.35, size = 12, colour = "gray30",
+                                 margin = margin(b = 15)),
+    
+    # Backgrounds
+    plot.background  = element_rect(fill = "#f5f5f5", colour = NA),
+    panel.background = element_rect(fill = "white", colour = NA),
+    panel.border     = element_rect(colour = "gray70", linewidth = 0.8, fill = NA),
+    
+    # Gridlines
+    panel.grid.major = element_line(colour = "gray90", linewidth = 0.5),
+    panel.grid.minor = element_line(colour = "gray95", linewidth = 0.3),
+    
+    # Legend formatting
+    legend.position   = "bottom",
+    legend.title      = element_blank(),
+    legend.text       = element_text(size = 10),
+    legend.background = element_rect(fill = "#f5f5f5", colour = NA),
+    legend.key        = element_rect(fill = "white", colour = NA),
+    
+    # Axes
+    axis.title = element_text(face = "bold", size = 12),
+    axis.text  = element_text(size = 10, colour = "gray20"),
+    axis.ticks = element_line(colour = "gray50"),
+    
+    # Margins
+    plot.margin = margin(15, 15, 15, 15)
+  ) +
+  
+  coord_cartesian(clip = "off")
