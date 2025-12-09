@@ -35,7 +35,7 @@ head(education_share_continents, 20)
 # --------Filter data for the two time periods ---------
 # selecting 2012 - 2015 average data 
 data_2015 <- cleaned_NEET_country %>%
-  filter(year >= 2012 & year <= 2015, !is.na(), !is.na(continent)) %>%
+  filter(year >= 2012 & year <= 2015, !is.na(neet_youth_pct), !is.na(continent)) %>%
   group_by(country, continent) %>%
   summarise(neet_youth_pct = mean(neet_youth_pct, na.rm = TRUE), .groups = "drop") %>%      # Average over recent years to not skew the data
   arrange(continent, country)                                                               # Sort data for easier visual comparison
@@ -43,7 +43,7 @@ head(data_2015, 30)
 
 # same for education data
 data_2015_education <- education_share_continents %>%
-  filter(year == 2015) %>%
+  filter(year >= 2012 & year <= 2015, !is.na(neet_youth_pct), !is.na(continent)) %>%
   group_by(country, Continent) %>%
   summarise(education_pct = mean(Secondary_School_Enrollment, na.rm = TRUE), .groups = "drop") %>%      # Average over recent years to not skew the data
   arrange(Continent, country)                                                                           # Sort data for easier visual comparison
