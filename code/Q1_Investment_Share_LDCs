@@ -87,7 +87,7 @@ p_scatter <- ggplot(scatter_df, aes(x = Investment_Share, y = gdp_growth, colour
     aes(x = Inf, y = Inf, label = label),
     hjust = 1, vjust = c(2, 4),
     colour = c("orange", "seagreen4"),
-    size = 5,
+    size = 4,
     fontface = "bold",
     inherit.aes = FALSE
   ) +
