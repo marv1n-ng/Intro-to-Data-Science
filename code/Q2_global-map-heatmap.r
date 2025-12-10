@@ -65,19 +65,19 @@ head(world_neet_2015, 20)
 # ----- Merge map data with NEET data for recent ---------
 world_neet_recent <- world %>%
   left_join(data_recent, by = c("iso_a3" = "code"))                                          # Join map data with NEET data using country codes whi h matched
-head(world_neet_recent, 20)                                                                  # this is really long and confusing, ended up starting chatGBT as this point
+head(world_neet_recent, 15)                                                                  # this is really long and confusing, ended up starting chatGBT as this point
 
 
 # ------- Plot world map heatmap for 2015 -------------
-p1 <- ggplot() +
-  geom_sf(data = world_neet_2015, aes(fill = neet_youth_pct), color = "white", size = 0.2) +
+p1 <- ggplot(data = world_neet_2015, aes(fill = neet_youth_pct))
+p1 + geom_sf(color = "white", size = 0.2) +
   scale_fill_viridis_c(
-    option = "C",
-    direction = -1,                                                                      # reverse the color scale so higher values are darker
-    na.value = "#dceeff",                                                              # light blue color for NA values (contrast with color scale)
-    limits = c(0, 40),
-    name = "Avg. NEET %",
-    breaks = seq(0, 40, 10)                                                              # set breaks for legend          
+  option = "C",
+  direction = -1,                                                                      # reverse the color scale so higher values are darker
+  na.value = "#dceeff",                                                              # light blue color for NA values (contrast with color scale)    
+  limits = c(0, 40),
+  name = "Avg. NEET %",
+  breaks = seq(0, 40, 10)                                                              # set breaks for legend          
   ) +
   labs(title = "Youth NEET Rates (2012 - 2015)",
        subtitle = "Darker coolours show a larger share of young people Not in Employment, Education, or Training") +
@@ -97,15 +97,15 @@ print(p1)
 ggsave("Q2_world_map_heatmap_2015.png", plot = p1, width = 12, height = 8, dpi = 300)
 
 # ------- Plot world map heatmap for recent -------------
-p2 <- ggplot() +
-  geom_sf(data = world_neet_recent, aes(fill = neet_youth_pct), color = "white", size = 0.2) +
+p2 <- ggplot(data = world_neet_recent, aes(fill = neet_youth_pct)) +
+p2 + geom_sf(color = "white", size = 0.2) +
   scale_fill_viridis_c(
-    option = "C",
-    direction = -1,                                                                      # reverse the color scale so higher values are darker
-    na.value = "#dceeff",                                                              # light blue color for NA values (contrast with color scale)
-    limits = c(0, 40),
-    name = "Avg. NEET %",
-    breaks = seq(0, 40, 10)                                                              # set breaks for legend          
+  option = "C",
+  direction = -1,                                                                      # reverse the color scale so higher values are darker
+  na.value = "#dceeff",                                                              # light blue color for NA values (contrast with color scale)
+  limits = c(0, 40),
+  name = "Avg. NEET %",
+  breaks = seq(0, 40, 10)                                                              # set breaks for legend          
   ) +
   labs(title = "Youth NEET Rates (2019 - 2022)",
        subtitle = "Darker coolours show a larger share of young people Not in Employment, Education, or Training") +
