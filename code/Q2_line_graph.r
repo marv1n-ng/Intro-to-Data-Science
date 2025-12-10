@@ -48,8 +48,8 @@ head(cleaned_NEET)
 
 # -------------------------- line plot -------------------------
 
-p <- ggplot(cleaned_NEET, aes(x = year, y = mean_neet_youth_pct, color = continent, group = continent))
-p + geom_line(linewidth = 1.1, alpha = 0.7) +       # opaque lines to show trends when lines overlap
+p1 <- ggplot(cleaned_NEET, aes(x = year, y = mean_neet_youth_pct, color = continent, group = continent))
+p1 + geom_line(linewidth = 1.1, alpha = 0.7) +       # opaque lines to show trends when lines overlap
   geom_point(size = 2.5, alpha = 0.8) +
   scale_colour_manual(values = c("Africa" = "seaGreen", "Asia" = "Red", "Europe" = "dodgerBlue", "North America" = "#9C27B0", "Oceania" = "Orange", "South America" = "Brown")) +
   scale_x_continuous(breaks = seq(1990, 2025, by = 5),                      # Show years every 5 years
@@ -83,7 +83,7 @@ p + geom_line(linewidth = 1.1, alpha = 0.7) +       # opaque lines to show trend
   theme(legend.position = "bottom", legend.title = element_blank()) 
 
 # --------------------- Save the plot ---------------------
-ggsave("Q2_line_graph.png", width = 10, height = 6, dpi = 300)
+ggsave("Q2_line_graph.png", plot = p1, width = 10, height = 6, dpi = 300)
 
 
 # --- now calculate a year average per continent for enrolement----
@@ -100,8 +100,8 @@ head(enrollment_per_year_continent)
  
 # ---- plot average youth enrollment in education per continent over time ----
 # -------------------------- line plot -------------------------
-p <- ggplot(enrollment_per_year_continent, aes(x = year, y = mean_enrollement, color = Continent, group = Continent))
-p + geom_line(linewidth = 1.1, alpha = 0.7) +       # opaque lines to show trends when lines overlap
+p2 <- ggplot(enrollment_per_year_continent, aes(x = year, y = mean_enrollement, color = Continent, group = Continent))
+p2 + geom_line(linewidth = 1.1, alpha = 0.7) +       # opaque lines to show trends when lines overlap
   geom_point(size = 2.5, alpha = 0.8) +
   scale_colour_manual(values = c("Africa" = "seaGreen", "Asia" = "Red", "Europe" = "dodgerBlue", "North America" = "#9C27B0", "Oceania" = "Orange", "South America" = "Brown")) +
   scale_x_continuous(breaks = seq(1990, 2025, by = 5),                      # Show years every 5 years
@@ -135,7 +135,7 @@ p + geom_line(linewidth = 1.1, alpha = 0.7) +       # opaque lines to show trend
   theme(legend.position = "bottom", legend.title = element_blank()) 
 
 # --------------------- Save the plot ---------------------
-ggsave("Q2_line_graph_education.png", width = 10, height = 6, dpi = 300)
+ggsave("Q2_line_graph_education.png", plot = p2, width = 10, height = 6, dpi = 300)
 
 
 # --------------------- End of Q2_p1.r ---------------------
